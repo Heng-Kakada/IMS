@@ -85,6 +85,12 @@ public static class IDataRecordExtension
         index = record.GetOrdinal("ImportID");
         int impID = record.GetInt32(index);
 
+        index = record.GetOrdinal("Note");
+        string note = record.GetString(index);
+
+        index = record.GetOrdinal("LastUpdate");
+        DateTime lUpdate = record.GetDateTime(index);
+
         return new Inventory()
         {
             ID = id,
@@ -94,6 +100,8 @@ public static class IDataRecordExtension
             InitialQty = initQty,
             ProductID = proID,
             ImportID = impID,
+            Note = note,
+            LastUpdate = lUpdate,
         };
     }
     public static Product ToProduct(this IDataRecord record)

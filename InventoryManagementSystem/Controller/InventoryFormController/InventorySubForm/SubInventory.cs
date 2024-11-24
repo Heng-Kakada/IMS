@@ -1,23 +1,108 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using IMS_Services.Entities;
+using IMS_Services.Services.Implementation;
+
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+using InventoryManagementSystem.Validation;
+using InventoryManagementSystem.Utils;
 
 namespace InventoryManagementSystem.Controller.InventoryFormController.InventorySubForm
 {
     public partial class SubInventory : Form
     {
+        public event InventoryEventHandler? InventoryModified;
+
 
         private static SubInventory instance = null!;
+        private Control[] controls;
+        private BindingSource bs = new BindingSource();
+        public static DataTable Table = new DataTable(InventoryServices.INV_TB_NAME);
 
         public SubInventory()
         {
             InitializeComponent();
+            Table.Rows.Clear();
+            bs.DataSource = Table;
+            dgvInventory.DataSource = bs;
+
+            LoadComboBoxes.LoadProductCBO(cboProductId);
+            LoadComboBoxes.LoadImportID(cboImportID);
+            ConfigView();
+            controls = new Control[]
+            {
+                txtId,
+                cboImportID,
+                rtxtNote,
+                txtUnitCost,
+                nudInitQty,
+                nudCurrStock,
+                dtExpireDate,
+                cboProductId,
+            };
+            
+
+            btnAdd.Click += DoClickAdd;
+            btnSubmit.Click += DoClickSubmit;
+        }
+
+      
+        private void DoClickSubmit(object? sender, EventArgs e)
+        {
+            if(cboImportID.SelectedItem == null)
+            {
+                MessageBox.Show("Please choose an import ID first!", "Batch Submitting", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cboImportID.Focus();
+                return;
+            }
+            try
+            {
+                //Add import id to the table
+                foreach (DataRow row in Table.Rows)
+                {
+                    row[InventoryServices.INV_COL_IMP_ID] = cboImportID.SelectedItem;
+                }
+                InventoryServices.Submit(Table.TableName).WriteToServer(Table);
+
+                MessageBox.Show("Sucessfully Submitted", "Submitting", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Table.Rows.Clear();
+                InventoryModified?.Invoke(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Submitting", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+        }
+
+        private void DoClickAdd(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (IsInventoryValid())
+                {
+                    // create instance product
+                    Inventory inventory = CreatorEntities.CreateInventory(controls.Skip(2).ToArray());
+                    
+                    // add to inventory detail
+                    Table.Rows.Add(InventoryServices.AddRow(Table, inventory));
+                    bs.ResetBindings(true);
+                    //clear control
+                    Util.ClearControls(controls);
+
+                    
+                    // show message to user
+                    MessageBox.Show($"Product Added!", "Creating", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }
+                else
+                {
+                    MessageBox.Show("Some Inputs are missing or not correct format!", "Creating", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+            
         }
 
         #region SingleTon For Only Show One Form
@@ -44,5 +129,37 @@ namespace InventoryManagementSystem.Controller.InventoryFormController.Inventory
         }
         #endregion
 
+
+        #region Validation
+
+
+        private bool IsInventoryValid()
+        {
+            bool isVilid = true;
+            isVilid = Validator.IsValidData(controls.Skip(2).ToArray());
+            return isVilid;
+        }
+
+        #endregion
+        private void ConfigView()
+        {
+            dgvInventory.Columns[InventoryServices.INV_COL_EXPDATE].DefaultCellStyle.Format = "dd/MM/yyyy";
+            dgvInventory.Columns[InventoryServices.INV_COL_LAST_UPDATE].DefaultCellStyle.Format = "dd/MM/yyyy";
+
+            dgvInventory.Columns[InventoryServices.INV_COL_ID].Visible = false;
+            dgvInventory.Columns[InventoryServices.INV_COL_CURRSTOCK].Visible = false;
+            dgvInventory.Columns[InventoryServices.INV_COL_LAST_UPDATE].Visible = false;
+            dgvInventory.Columns[InventoryServices.INV_COL_IMP_ID].Visible = false;
+
+
+            dgvInventory.Columns[InventoryServices.INV_COL_ID].HeaderText = "ID";
+            dgvInventory.Columns[InventoryServices.INV_COL_ID].Width = 55;
+            dgvInventory.Columns[InventoryServices.INV_COL_UNITCOST].Width = 66;
+            dgvInventory.Columns[InventoryServices.INV_COL_INITQTY].Width = 82;
+            dgvInventory.Columns[InventoryServices.INV_COL_EXPDATE].Width = 105;
+            dgvInventory.Columns[InventoryServices.INV_COL_PRO_ID].Width = 82;
+            dgvInventory.Columns[InventoryServices.INV_COL_PRO_ID].DisplayIndex = 0;
+
+        }
     }
 }

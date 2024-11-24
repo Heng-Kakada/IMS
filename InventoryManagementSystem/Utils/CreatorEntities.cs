@@ -37,5 +37,18 @@ public static class CreatorEntities
             CategoryID = Convertor.ConvertToCategoryID(controls[6]),
         };
     }
+    public static Inventory CreateInventory(Control[] controls)
+    {
+        return new Inventory()
+        {
+            Note = Convertor.ConvertToString(controls[0]),
+            UnitCost = Convertor.ConvertToDecimal(controls[1]),
+            InitialQty = Convertor.ConvertToShort(controls[2]),
+            CurrentStock = Convertor.ConvertToShort(controls[3]),
+            ExpirationDate = Convertor.ConvertToDateTime(controls[4]),
+            ProductID = Convertor.ConvertToProductID(controls[5]),
+            LastUpdate = DateTime.Now,
+        };
+    }
 
 }

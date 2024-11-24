@@ -35,6 +35,10 @@ public static class Util
         {
             dataGridView.ClearSelection();
         }
+        else if (control is NumericUpDown numericUpDown)
+        {
+            numericUpDown.Value = 0;
+        }
     }
 
     public static void ClearControls(Control[] controls)

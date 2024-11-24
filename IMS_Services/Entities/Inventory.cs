@@ -15,5 +15,7 @@ public class Inventory
     public short InitialQty { get; set; }
     public int ProductID { get; set; }
     public int ImportID { get; set; }
+    public string? Note { get; set; }
+    public DateTime LastUpdate {  get; set; }
 
 }
